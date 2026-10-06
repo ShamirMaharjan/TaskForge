@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS priorities;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS statuses;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS departments;
+DROP FUNCTION IF EXISTS set_updated_at();
