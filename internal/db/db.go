@@ -23,12 +23,14 @@ func NewPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	// pingCtx governs initial connection allocation during pool startup
 	pool, err := pgxpool.NewWithConfig(pingCtx, cfg)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create database connection pool: %w", err)
 	}
 
+	// Explicitly verify connection reachability
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("database server is unreachable during intial ping: %w", err)

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -10,7 +11,7 @@ import (
 
 type Config struct {
 	DatabaseURL string
-	Port        string
+	Port        int
 	Env         string
 }
 
@@ -19,22 +20,37 @@ func Load() (*Config, error) {
 
 	var missingVars []string
 
+	// 1. Database URL check
 	dbURL, ok := os.LookupEnv("DATABASE_URL")
 	if !ok || strings.TrimSpace(dbURL) == "" {
-		missingVars = append(missingVars, "DATABASE_URL")
+		missingVars = append(missingVars, "DATABASE_URL is required and cannot be empty.")
 	}
 
-	port, ok := os.LookupEnv("PORT")
+	dbURL = strings.TrimSpace(dbURL)
 
-	if !ok || strings.TrimSpace(port) == "" {
-		port = "8080"
+	// 2. Port validation
+	portStr, ok := os.LookupEnv("PORT")
+
+	if !ok || strings.TrimSpace(portStr) == "" {
+		portStr = "8080"
 	}
 
-	env, ok := os.LookupEnv("ENV")
+	portStr = strings.TrimSpace(portStr)
 
-	if !ok || strings.TrimSpace(env) == "" {
-		env = "development"
+	portNum, err := strconv.Atoi(portStr)
+
+	if err != nil || portNum < 1 || portNum > 65535 {
+		missingVars = append(missingVars, fmt.Sprintf("PORT must be an integer between 1 and 65535 (got: %q)", portStr))
 	}
+
+	// 3. Environment check
+	envStr, ok := os.LookupEnv("ENV")
+
+	if !ok || strings.TrimSpace(envStr) == "" {
+		envStr = "development"
+	}
+
+	envStr = strings.TrimSpace(envStr)
 
 	if len(missingVars) > 0 {
 		return nil, fmt.Errorf("missing required variable(s): %s", strings.Join(missingVars, ", "))
@@ -42,8 +58,8 @@ func Load() (*Config, error) {
 
 	return &Config{
 		DatabaseURL: dbURL,
-		Port:        port,
-		Env:         env,
+		Port:        portNum,
+		Env:         envStr,
 	}, nil
 
 }
