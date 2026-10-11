@@ -1,12 +1,16 @@
--- Read-only permissions for fixed lookup tables
-GRANT SELECT ON roles, statuses TO flowmind_app;
+-- Code-Owned Lookups (Read-Only)
+GRANT SELECT ON roles, statuses TO taskforge_app;
 
--- Full edit permissions for admin-managed lookups
-GRANT SELECT, INSERT, UPDATE ON departments, categories, priorities TO flowmind_app;
+-- Admin-Editable Lookups (INSERT allowed; UPDATE strictly restricted to column 'name')
+GRANT SELECT, INSERT ON departments, categories, priorities TO taskforge_app;
+GRANT UPDATE (name) ON departments, categories, priorities TO taskforge_app;
 
--- Application tables (Read, Insert, Update — NO DELETE)
-GRANT SELECT, INSERT, UPDATE ON users, user_passwords, oauth_accounts, refresh_tokens, email_verification_tokens TO flowmind_app;
-GRANT SELECT, INSERT, UPDATE ON tickets, comments TO flowmind_app;
+-- Operational Application Tables (No DELETE granted to taskforge_app)
+GRANT SELECT, INSERT, UPDATE ON users, user_passwords, oauth_accounts, email_verification_tokens, refresh_tokens TO taskforge_app;
+GRANT SELECT, INSERT, UPDATE ON tickets, comments TO taskforge_app;
 
--- Audit table (Append-Only: Read and Insert only)
-GRANT SELECT, INSERT ON audit TO flowmind_app;
+-- Append-Only Audit Table
+GRANT SELECT, INSERT ON audit TO taskforge_app;
+
+-- Maintenance Cron Permissions (Strictly restricted to session and token table cleanup)
+GRANT SELECT, DELETE ON refresh_tokens, email_verification_tokens TO taskforge_cron;
