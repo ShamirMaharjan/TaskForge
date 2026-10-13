@@ -17,22 +17,29 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	cfg, err := config.Load()
 
 	if err != nil {
-		log.Fatalf("Config initalization error: %v", err)
+		log.Printf("Config initalization error: %v", err)
+		return 1
 	}
 
 	// Signal context listens for termination signals
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-
 	defer stop()
 
 	pool, err := db.NewPool(sigCtx, cfg.DatabaseURL)
 
 	if err != nil {
-		log.Fatalf("database initalization error: %v", err)
+		log.Printf("database initalization error: %v", err)
+		return 1
 	}
+	// Guaranteed to run before run() returns an exit code to main()
+	defer pool.Close()
 
 	mux := http.NewServeMux()
 	registerHandlers(mux, pool, cfg.Env)
@@ -56,9 +63,10 @@ func main() {
 	select {
 	case err := <-serverError:
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server died unexpectely: %v", err)
+			log.Printf("HTTP server died unexpectely: %v", err)
+			return 1
 		}
-
+		return 0
 	case <-sigCtx.Done():
 		// Restore standard signal handling so a second Ctrl+C forces an immediate exit
 		stop()
@@ -80,15 +88,13 @@ func main() {
 			log.Printf("Server background exit error: %v", err)
 		}
 
-		pool.Close()
-
 		if forcedShutdown {
 			log.Println("Server terminated forcefully with active requests dropped.")
-			os.Exit(1)
+			return 1
 		}
 
 		log.Println("Server shutdown clean. All connections drained.")
-		os.Exit(0)
+		return 0
 	}
 }
 
