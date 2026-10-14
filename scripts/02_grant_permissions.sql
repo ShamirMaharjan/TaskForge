@@ -11,6 +11,7 @@ GRANT SELECT, INSERT, UPDATE ON tickets, comments TO taskforge_app;
 
 -- Append-Only Audit Table
 GRANT SELECT, INSERT ON audit TO taskforge_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON audit FROM taskforge_app;
 
 -- Maintenance Cron Permissions (Strictly restricted to session and token table cleanup)
 GRANT SELECT, DELETE ON refresh_tokens, email_verification_tokens TO taskforge_cron;
