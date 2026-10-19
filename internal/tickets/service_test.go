@@ -52,15 +52,18 @@ func TestTicketCreation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("expected creation to succeed: %v", err)
 		}
-		var expectedCategory, expectedPriority uuid.UUID
+		var expectedCategory, expectedPriority, expectedStatus uuid.UUID
 		if err := tdb.AppPool.QueryRow(ctx, "SELECT id FROM categories WHERE slug = 'general'").Scan(&expectedCategory); err != nil {
 			t.Fatal(err)
 		}
 		if err := tdb.AppPool.QueryRow(ctx, "SELECT id FROM priorities WHERE slug = 'medium'").Scan(&expectedPriority); err != nil {
 			t.Fatal(err)
 		}
-		if ticket.CategoryID != expectedCategory || ticket.PriorityID != expectedPriority {
-			t.Fatalf("unexpected defaults: category=%s priority=%s", ticket.CategoryID, ticket.PriorityID)
+		if err := tdb.AppPool.QueryRow(ctx, "SELECT id FROM statuses WHERE slug = 'unassigned'").Scan(&expectedStatus); err != nil {
+			t.Fatal(err)
+		}
+		if ticket.CategoryID != expectedCategory || ticket.PriorityID != expectedPriority || ticket.StatusID != expectedStatus {
+			t.Fatalf("unexpected defaults: status=%s category=%s priority=%s", ticket.StatusID, ticket.CategoryID, ticket.PriorityID)
 		}
 		var action string
 		if err := tdb.AppPool.QueryRow(ctx, "SELECT action FROM audit WHERE ticket_id = $1", ticket.ID).Scan(&action); err != nil {

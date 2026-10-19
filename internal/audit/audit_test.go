@@ -157,6 +157,9 @@ func TestTransactionalTicketAndAudit(t *testing.T) {
 		if !errors.Is(err, context.Canceled) {
 			t.Fatalf("expected context cancellation, got %v", err)
 		}
+		if err != context.Canceled {
+			t.Fatalf("expected the original cancellation error without rollback wrapping, got %v", err)
+		}
 		var count int
 		if err := tdb.AppPool.QueryRow(ctx, "SELECT COUNT(*) FROM tickets WHERE id = $1", ticketID).Scan(&count); err != nil {
 			t.Fatal(err)
